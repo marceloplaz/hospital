@@ -24,4 +24,7 @@ class Persona extends Model
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
+    public function role() {
+    return $this->belongsTo(Role::class);
+    }
 }
