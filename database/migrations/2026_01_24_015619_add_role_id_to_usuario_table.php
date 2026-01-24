@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
 {
-    Schema::table('usuario', function (Blueprint $table) {
+    //Schema::table('usuario', function (Blueprint $table) {
         // Creamos la columna y la vinculamos a la tabla roles
-        $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');
-    });
+    //    $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');
+    }//);
 }
 
 public function down(): void

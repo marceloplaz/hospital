@@ -44,7 +44,8 @@ public function persona()
     // Un usuario tiene una información personal (Persona)
     return $this->hasOne(Persona::class, 'usuario_id');
 }
-public function role() {
-    return $this->belongsTo(Role::class);
+public function role()
+{
+    return $this->belongsTo(Role::class, 'role_id');
 }
 }
