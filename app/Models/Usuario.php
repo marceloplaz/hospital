@@ -39,4 +39,9 @@ public function turnosAsignados()
     // 'usuario_id' es la columna en la tabla turno_asignado
     return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
 }
+public function persona()
+{
+    // Un usuario tiene una información personal (Persona)
+    return $this->hasOne(Persona::class, 'usuario_id');
+}
 }
