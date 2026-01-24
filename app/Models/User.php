@@ -52,7 +52,11 @@ public function getNameAttribute()
     return $this->nombre;
 }
 
-
+// app/Models/User.php O app/Models/Usuario.php
+public function turnosAsignados()
+{
+    return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
+}
 
     // Relación con servicios
     public function servicios()
