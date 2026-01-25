@@ -13,6 +13,7 @@ class Persona extends Model
         'apellidos', 
         'usuario_id', 
         'tipo_trabajador', 
+        'item', 
         'fecha_nacimiento', 
         'genero', 
         'telefono', 
