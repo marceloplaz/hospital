@@ -8,12 +8,20 @@ class Persona extends Model
 {
     protected $table = 'personas';
 
+   namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Persona extends Model
+{
+    protected $table = 'personas';
+
     protected $fillable = [
         'nombres', 
         'apellidos', 
         'usuario_id', 
         'tipo_trabajador', 
-        'item', 
+        'item', // Campo ENUM: Item TGN, Item SUS, Contrato
         'fecha_nacimiento', 
         'genero', 
         'telefono', 
@@ -21,11 +29,10 @@ class Persona extends Model
         'nacionalidad'
     ];
 
+    // Relación directa: Una persona pertenece a un usuario
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
-    public function role() {
-    return $this->belongsTo(Role::class);
-    }
+}
 }
