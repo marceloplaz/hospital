@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('usuario_id');
             $table->unsignedBigInteger('servicio_id');
 
-            // Relación con la tabla 'usuario' (en singular como tú la tienes)
+            // Relación con la tabla 'usuario'
             $table->foreign('usuario_id')
                   ->references('id')
                   ->on('usuario') 
@@ -46,4 +46,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('usuario_servicio');
     }
-}
+}; // <--- EL PUNTO Y COMA AQUÍ ES LA SOLUCIÓN

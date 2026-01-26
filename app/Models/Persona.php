@@ -3,14 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Persona extends Model
+class Usuario extends Authenticatable
 {
-    protected $table = 'personas';
+    use Notifiable;
 
-   namespace App\Models;
+    protected $table = 'usuario';
 
-use Illuminate\Database\Eloquent\Model;
+    protected $fillable = [
+        'nombre', 
+        'email', 
+        'password', 
+        'estado', 
+        'role_id' // Relación con roles
+    ];
+    // Relación Inversa: Un Usuario tiene una Persona
+    public function persona()
+    {
+        return $this->hasOne(Persona::class, 'usuario_id');
+    }
+
+    // Relación con el Rol
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+}
 
 class Persona extends Model
 {
@@ -29,10 +49,11 @@ class Persona extends Model
         'nacionalidad'
     ];
 
-    // Relación directa: Una persona pertenece a un usuario
+    /**
+     * Relación directa: Una persona pertenece a un usuario
+     */
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
-}
 }

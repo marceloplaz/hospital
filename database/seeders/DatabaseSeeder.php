@@ -13,11 +13,11 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
-   public function run(): void
+  public function run(): void
 {
-    // Solo llama al seeder que acabamos de arreglar
     $this->call([
-        CalendarioSeeder::class,
+        HospitalBaseSeeder::class, // Tus roles, turnos y servicios
+        CalendarioSeeder::class,   // Tus gestiones, meses y semanas
     ]);
 }
 }

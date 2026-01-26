@@ -2,24 +2,26 @@
 
 namespace App\Models;
 
-// Cambiamos Model por Authenticatable para que funcione el login
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Usuario extends Authenticatable
 {
     use Notifiable;
 
     protected $table = 'usuario';
-
-    // Desactiva esto si tu tabla NO tiene las columnas created_at y updated_at
     public $timestamps = false; 
 
     protected $fillable = [
         'nombre', 
         'email', 
         'password', 
-        'estado'
+        'estado',
+        'role_id',    // Necesario para el registro de personal
+        'servicio_id' // Agregado según tus otras relaciones
     ];
 
     protected $hidden = [
@@ -27,25 +29,27 @@ class Usuario extends Authenticatable
         'remember_token',
     ];
 
-  
-public function servicio()
+    // Relación con Persona
+    public function persona(): HasOne
+    {
+        return $this->hasOne(Persona::class, 'usuario_id');
+    }
+
+    // Relación con el Rol (Asegúrate de que el archivo sea Role.php)
+   // En app/Models/Usuario.php
+
+public function rol(): BelongsTo
+{
+    // Usar la ruta completa elimina cualquier duda de Laravel
+    return $this->belongsTo(\App\Models\Role::class, 'role_id');
+}
+    public function servicio(): BelongsTo
     {
         return $this->belongsTo(Servicio::class, 'servicio_id');
     }
-    // Dentro de la clase Usuario
-public function turnosAsignados()
-{
-    // Un usuario tiene muchos turnos asignados
-    // 'usuario_id' es la columna en la tabla turno_asignado
-    return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
-}
-public function persona()
-{
-    // Un usuario tiene una información personal (Persona)
-    return $this->hasOne(Persona::class, 'usuario_id');
-}
-public function role()
-{
-    return $this->belongsTo(Role::class, 'role_id');
-}
+
+    public function turnosAsignados(): HasMany
+    {
+        return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
+    }
 }

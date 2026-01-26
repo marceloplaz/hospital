@@ -20,6 +20,33 @@
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
+            <ul class="navbar-nav ms-auto">
+    @guest
+        @else
+        <li class="nav-item dropdown">
+            <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                <i class="fas fa-user-md"></i> 
+                {{ Auth::user()->persona->nombres ?? Auth::user()->nombre }} 
+                
+                @if(Auth::user()->persona)
+                    <span class="badge bg-light text-dark ms-1" style="font-size: 0.7rem;">
+                        {{ Auth::user()->persona->item }}
+                    </span>
+                @endif
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-end">
+                <a class="dropdown-item" href="{{ route('logout') }}"
+                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    Cerrar Sesión
+                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
+            </div>
+        </li>
+    @endguest
+</ul>
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     {{ config('app.name', 'Laravel') }}
