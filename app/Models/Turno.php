@@ -1,30 +1,32 @@
 <?php
 
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Turno extends Model
 {
-    // Definimos el nombre real de la tabla
+    // 1. Nombre real de la tabla en tu DB
     protected $table = 'turno';
 
-    // Laravel asume que la PK es 'id'. Aquí la corregimos a 'id_turno'
-    protected $primaryKey = 'id';
-    public $timestamps = false;
-    // Si tu PK no es un número autoincremental (aunque suele serlo), 
-    // podrías necesitar: public $incrementing = true;
+    // 2. CORRECCIÓN CRÍTICA: Tu llave primaria real es id_turno
+    protected $primaryKey = 'id_turno';
 
+    // 3. Desactivamos timestamps si tu tabla no tiene 'created_at' y 'updated_at'
+    public $timestamps = false;
+
+    // 4. Campos que permitimos guardar
     protected $fillable = [
-        'tipo',
-        'duracion',
+        'nombre_turno',
+        'duracion_horas',
         'hi',
         'hf'
     ];
 
     /**
-     * Relación: Un turno puede estar asignado muchas veces en la tabla pivote
+     * Relación: Un turno aparece en muchas asignaciones.
+     * El segundo parámetro es la FK en 'turno_asignado'.
+     * El tercer parámetro es la PK en esta tabla ('id_turno').
      */
     public function asignaciones()
     {
@@ -32,7 +34,7 @@ class Turno extends Model
     }
 
     /**
-     * Relación: El usuario que posee este turno (dueño/creador)
+     * Si un turno pertenece a un usuario (creador).
      */
     public function usuario()
     {

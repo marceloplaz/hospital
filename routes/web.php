@@ -1,28 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth; // Asegúrate de que esta línea esté presente
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\TurnoAsignadoController;
 use App\Http\Controllers\PersonaController;
+use App\Http\Controllers\HomeController; // Importamos el HomeController
 
-// 1. Redirección raíz
+// 1. Redirección raíz: Si entra a la carpeta principal, al Login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 2. Rutas de Autenticación
+// 2. Rutas de Autenticación (Login, Logout, Registro)
 Auth::routes();
 
-// 3. Redirección inteligente de HOME
-// Esto arregla el error 404 que veías después de loguearte
-Route::get('/home', function () {
-    return redirect()->route('personas.index');
-})->name('home'); 
+// 3. RUTA DEL HOME (DASHBOARD) - CORREGIDA
+// Esta es la ruta que cargará tu diseño con el Reloj y las Estadísticas
+Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
-// 4. Recurso de Personas (Simplificado)
-// El resource ya incluye: index, create, store, show, edit, update y destroy.
-// No hace falta definirlas por separado abajo.
+// 4. Recurso de Personas
 Route::resource('personas', PersonaController::class);
 
 // 5. Rutas de Servicios
@@ -34,4 +31,6 @@ Route::post("/servicio/{id}/usuarioservicio", [ServicioController::class, "funAs
 Route::get('/turnos/crear', [TurnoAsignadoController::class, 'create'])->name('turnos.create');
 Route::post('/turnos/guardar', [TurnoAsignadoController::class, 'store'])->name('turnos.store');
 Route::get('/turnos', [TurnoAsignadoController::class, 'index'])->name('turnos.index');
-Route::get('personas/{id}/pdf', [App\Http\Controllers\PersonaController::class, 'generarPDF'])->name('personas.pdf');
+
+// 7. Reportes PDF
+Route::get('personas/{id}/pdf', [PersonaController::class, 'generarPDF'])->name('personas.pdf');

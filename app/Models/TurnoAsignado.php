@@ -37,10 +37,5 @@ class TurnoAsignado extends Model
         return $this->belongsTo(Semana::class, 'semana_id');
     }
 
-  public function turnoDetalle()
-{
-    // 'turno_id' es la columna en turno_asignado
-    // 'id' es la columna en la tabla turno
-    return $this->belongsTo(Turno::class, 'turno_id', 'id');
-}
+  
 }

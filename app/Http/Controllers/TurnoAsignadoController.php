@@ -27,10 +27,7 @@ class TurnoAsignadoController extends Controller
             ->when($servicioId, function($query) use ($servicioId) {
                 return $query->where('servicio_id', $servicioId);
             })
-            ->with(['turnosAsignados' => function($query) use ($servicioId, $semanaId) {
-                if ($servicioId) {
-                    $query->where('servicio_id', $servicioId);
-                }
+            ->with(['turnosAsignados' => function($query) use ($semanaId) {
                 if ($semanaId) {
                     $query->where('semana_id', $semanaId);
                 }
@@ -41,104 +38,88 @@ class TurnoAsignadoController extends Controller
         return view('turnos.index', compact('turnos', 'servicios', 'semanas', 'servicioSeleccionado', 'semanaSeleccionada'));
     }
 
-    // 2. Mostrar formulario para crear (MODIFICADO)
-public function create(Request $request)
-{
-    $servicios = Servicio::all();
-    $semanas = Semana::with('mes')->get();
-    $turnosDisponibles = Turno::all();
+    // 2. Mostrar formulario para crear
+    public function create(Request $request)
+    {
+        $servicios = Servicio::all();
+        $semanas = Semana::with('mes')->get();
+        $turnosDisponibles = Turno::all();
 
-    $selected_servicio = $request->get('servicio_id');
-    $selected_usuario = $request->get('usuario_id');
-    $selected_semana = $request->get('semana_id');
+        $selected_servicio = $request->get('servicio_id');
+        $selected_usuario = $request->get('usuario_id');
+        $selected_semana = $request->get('semana_id');
 
-    // --- CORRECCIÓN CRÍTICA AQUÍ ---
-    // Usamos 'with' para que cada usuario ya traiga sus turnos y los detalles del turno (horas)
-    // Esto es lo que permite que la tabla en Blade muestre los datos
-    $query = Usuario::where('estado', 1)
-        ->with(['turnosAsignados' => function($q) use ($selected_semana, $selected_servicio) {
-            if ($selected_semana) $q->where('semana_id', $selected_semana);
-            if ($selected_servicio) $q->where('servicio_id', $selected_servicio);
-            $q->with('turnoDetalle'); // Importante para sumar las horas
-        }]);
+        // Carga base de usuarios
+        $usuarios = Usuario::where('estado', 1)->get();
 
-    if ($selected_servicio) {
-        // Si tienes la relación en el modelo Servicio, la usamos
-        $servicioEncontrado = Servicio::find($selected_servicio);
-        if ($servicioEncontrado) {
-            $usuarios = $servicioEncontrado->usuarios()
-                ->where('usuario.estado', 1)
-                ->with(['turnosAsignados' => function($q) use ($selected_semana, $selected_servicio) {
-                    if ($selected_semana) $q->where('semana_id', $selected_semana);
-                    if ($selected_servicio) $q->where('servicio_id', $selected_servicio);
-                    $q->with('turnoDetalle');
-                }])
-                ->get();
-        } else {
-            $usuarios = $query->get();
+        if ($selected_servicio) {
+            $servicioEncontrado = Servicio::find($selected_servicio);
+            if ($servicioEncontrado) {
+                // Filtramos por la relación si existe
+                $usuariosDelServicio = $servicioEncontrado->usuarios()
+                    ->where('usuario.estado', 1)
+                    ->get();
+                
+                if ($usuariosDelServicio->isNotEmpty()) {
+                    $usuarios = $usuariosDelServicio;
+                }
+            }
         }
-    } else {
-        $usuarios = $query->get();
+
+        $turnosRecientes = TurnoAsignado::with(['usuario', 'servicio', 'semana.mes', 'turnoDetalle'])
+            ->when($selected_servicio, function($query) use ($selected_servicio) {
+                return $query->where('servicio_id', $selected_servicio);
+            })
+            ->orderBy('id', 'desc') // Si tu tabla turno_asignado no tiene 'id', usa 'id_turno_asignado'
+            ->take(10)
+            ->get();
+
+        return view('turnos.create', compact(
+            'usuarios', 'servicios', 'semanas', 'turnosDisponibles', 
+            'turnosRecientes', 'selected_usuario', 'selected_servicio', 'selected_semana'
+        ));
     }
 
-    $turnosRecientes = TurnoAsignado::with(['usuario', 'servicio', 'semana.mes', 'turnoDetalle'])
-        ->when($selected_servicio, function($query) use ($selected_servicio) {
-            return $query->where('servicio_id', $selected_servicio);
-        })
-        ->orderBy('id', 'desc')
-        ->take(10)
-        ->get();
+    // 3. Guardar la asignación (CORREGIDO PARA EL ERROR 1054)
+    public function store(Request $request)
+    {
+        // AJUSTE: He cambiado 'id' por el nombre probable de tus columnas.
+        // Si en tu base de datos siguen siendo 'id', déjalos, pero el error dice que en 'turno' no existe.
+        $request->validate([
+            'usuario_id'  => 'required|exists:usuario,id',
+            'servicio_id' => 'required|exists:servicio,id',
+            'semana_id'   => 'required|exists:semana,id',
+            'turno_id'    => 'required|exists:turno,id_turno', // <--- CAMBIADO AQUÍ
+            'dia'         => 'required|string',
+        ]);
 
-    return view('turnos.create', compact(
-        'usuarios', 
-        'servicios', 
-        'semanas', 
-        'turnosDisponibles', 
-        'turnosRecientes', 
-        'selected_usuario', 
-        'selected_servicio', 
-        'selected_semana'
-    ));
-}
-    // 3. Guardar la asignación
- public function store(Request $request)
-{
-    $request->validate([
-        'usuario_id'  => 'required|exists:usuario,id',
-        'servicio_id' => 'required|exists:servicio,id',
-        'semana_id'   => 'required|exists:semana,id',
-        'turno_id'    => 'required|exists:turno,id',
-        'dia'         => 'required|string',
-    ]);
+        $existeTurno = TurnoAsignado::where('usuario_id', $request->usuario_id)
+            ->where('semana_id', $request->semana_id)
+            ->where('dia', $request->dia)
+            ->exists();
 
-    $existeTurno = TurnoAsignado::where('usuario_id', $request->usuario_id)
-        ->where('semana_id', $request->semana_id)
-        ->where('dia', $request->dia)
-        ->exists();
+        if ($existeTurno) {
+            return redirect()->route('turnos.create', [
+                'servicio_id' => $request->servicio_id,
+                'usuario_id'  => $request->usuario_id,
+                'semana_id'   => $request->semana_id
+            ])->with('error', 'El médico ya tiene un turno asignado para este día.');
+        }
 
-    if ($existeTurno) {
-        // Si ya existe, volvemos atrás manteniendo los filtros en la URL
+        // Usamos Eloquent para crear el registro
+        $nuevaAsignacion = new TurnoAsignado();
+        $nuevaAsignacion->usuario_id = $request->usuario_id;
+        $nuevaAsignacion->servicio_id = $request->servicio_id;
+        $nuevaAsignacion->semana_id = $request->semana_id;
+        $nuevaAsignacion->turno_id = $request->turno_id;
+        $nuevaAsignacion->dia = $request->dia;
+        $nuevaAsignacion->estado = 'Asignado';
+        $nuevaAsignacion->save();
+
         return redirect()->route('turnos.create', [
             'servicio_id' => $request->servicio_id,
             'usuario_id'  => $request->usuario_id,
             'semana_id'   => $request->semana_id
-        ])->with('error', 'El médico ya tiene un turno asignado para este día.');
+        ])->with('success', 'Turno asignado correctamente.');
     }
-
-    TurnoAsignado::create([
-        'usuario_id'  => $request->usuario_id,
-        'servicio_id' => $request->servicio_id,
-        'semana_id'   => $request->semana_id,
-        'turno_id'    => $request->turno_id,
-        'dia'         => $request->dia,
-        'estado'      => 'Asignado',
-    ]);
-
-    // REDIRECCIÓN CORREGIDA: Volver a la vista de creación con los mismos datos
-    return redirect()->route('turnos.create', [
-        'servicio_id' => $request->servicio_id,
-        'usuario_id'  => $request->usuario_id,
-        'semana_id'   => $request->semana_id
-    ])->with('success', 'Turno asignado correctamente.');
-}
 }

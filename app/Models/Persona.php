@@ -3,57 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-
-class Usuario extends Authenticatable
-{
-    use Notifiable;
-
-    protected $table = 'usuario';
-
-    protected $fillable = [
-        'nombre', 
-        'email', 
-        'password', 
-        'estado', 
-        'role_id' // Relación con roles
-    ];
-    // Relación Inversa: Un Usuario tiene una Persona
-    public function persona()
-    {
-        return $this->hasOne(Persona::class, 'usuario_id');
-    }
-
-    // Relación con el Rol
-    public function role()
-    {
-        return $this->belongsTo(Role::class, 'role_id');
-    }
-}
 
 class Persona extends Model
 {
-    protected $table = 'personas';
+    protected $table = 'personas'; // Verifica si es 'persona' o 'personas' en tu DB
 
     protected $fillable = [
-        'nombres', 
-        'apellidos', 
-        'usuario_id', 
-        'tipo_trabajador', 
-        'item', // Campo ENUM: Item TGN, Item SUS, Contrato
-        'fecha_nacimiento', 
-        'genero', 
-        'telefono', 
-        'direccion', 
-        'nacionalidad'
+        'nombres', 'apellidos', 'usuario_id', 'tipo_trabajador', 
+        'item', 'fecha_nacimiento', 'genero', 'telefono', 
+        'direccion', 'nacionalidad', 'turno_id', 'servicio_id'
     ];
 
-    /**
-     * Relación directa: Una persona pertenece a un usuario
-     */
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'usuario_id');
+    }
+
+    // RELACIÓN CON TURNO (Fundamental para el Reloj del Home)
+    public function turno()
+    {
+        return $this->belongsTo(Turno::class, 'turno_id');
+    }
+    public function persona(): HasOne
+    {
+    // Al definir la relación, Laravel usará el nombre de tabla definido en el modelo Persona
+    return $this->hasOne(Persona::class, 'usuario_id');
+    }
+
+    // RELACIÓN CON SERVICIO (Fundamental para ver dónde trabaja)
+ 
+    public function servicio()
+    {
+        return $this->belongsTo(Servicio::class, 'servicio_id');
     }
 }
