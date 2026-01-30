@@ -8,13 +8,24 @@
 
 @section('content')
 <div class="container-fluid">
-    {{-- 1. FORMULARIO DE REGISTRO ESTILIZADO --}}
+    
+    {{-- Mensajes de Éxito --}}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    {{-- 1. FORMULARIO DE REGISTRO --}}
     <div class="card card-primary card-outline shadow-sm mb-4">
         <div class="card-header">
             <h3 class="card-title font-weight-bold">Registrar Nuevo Servicio</h3>
         </div>
         <div class="card-body bg-light">
-            <form action="/servicio" method="post">
+            <form action="{{ route('servicio.store') }}" method="post">
                 @csrf
                 <div class="row align-items-end">
                     <div class="col-md-3">
@@ -27,10 +38,10 @@
                     </div>
                     <div class="col-md-2">
                         <label class="text-secondary small font-weight-bold">CANT. PACIENTES</label>
-                        <input type="number" name="cantidad_pacientes" class="form-control" placeholder="0">
+                        <input type="number" name="cantidad_pacientes" class="form-control" placeholder="0" required>
                     </div>
                     <div class="col-md-3">
-                        <button type="submit" class="btn btn-success btn-block font-weight-bold">
+                        <button type="submit" class="btn btn-success btn-block font-weight-bold shadow-sm">
                             <i class="fas fa-save mr-1"></i> GUARDAR SERVICIO
                         </button>
                     </div>
@@ -39,10 +50,10 @@
         </div>
     </div>
 
-    {{-- 2. TABLA DE SERVICIOS --}}
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-hover table-striped mb-0">
+    {{-- 2. TABLA DE SERVICIOS (Con ID para DataTable) --}}
+    <div class="card shadow-sm border-top-0">
+        <div class="card-body p-3"> {{-- Un poco de padding para que el buscador respire --}}
+            <table id="tabla-servicios" class="table table-hover table-striped mb-0">
                 <thead class="bg-white border-bottom">
                     <tr>
                         <th style="width: 80px">ID</th>
@@ -64,9 +75,22 @@
                                 <a href="{{ route('servicio.show', $s->id) }}" class="btn btn-info btn-sm shadow-sm" title="Ver Detalles">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ url('/servicio/' . $s->id . '/usuarioservicio') }}" class="btn btn-primary btn-sm shadow-sm ml-1" title="Asignar Usuario">
-                                    <i class="fas fa-user-plus mr-1"></i> Asignar
+
+                                <a href="{{ route('servicio.edit', $s->id) }}" class="btn btn-warning btn-sm shadow-sm ml-1" title="Editar">
+                                    <i class="fas fa-edit"></i>
                                 </a>
+
+                                <a href="{{ url('/servicio/' . $s->id . '/usuarioservicio') }}" class="btn btn-primary btn-sm shadow-sm ml-1" title="Asignar Usuario">
+                                    <i class="fas fa-user-plus"></i>
+                                </a>
+
+                                <form action="{{ route('servicio.destroy', $s->id) }}" method="POST" class="ml-1">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm shadow-sm" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este servicio?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -77,3 +101,20 @@
     </div>
 </div>
 @stop
+
+{{-- 3. ACTIVACIÓN DE DATATABLES --}}
+@push('js')
+<script>
+    $(document).ready(function() {
+        $('#tabla-servicios').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "responsive": true, 
+            "autoWidth": false,
+            "order": [[ 0, "desc" ]], // Ordena por el ID de forma descendente
+            "dom": '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>', // Acomoda buscador y paginación
+        });
+    });
+</script>
+@endpush

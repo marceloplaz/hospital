@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('usuario_servicio', function (Blueprint $table) {
             // 1. Creamos la columna
-            $table->unsignedBigInteger('turno_id')->nullable()->after('servicio_id');
+            $table->unsignedBigInteger('turno_id')->after('servicio_id');
 
             // 2. Creamos la relación manual apuntando a 'turno' e 'id_turno'
             $table->foreign('turno_id')

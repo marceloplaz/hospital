@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Traits\HasRoles; // <--- 1. IMPORTANTE: Añadir esta línea
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    // 2. AÑADIR HasRoles a los traits que usa la clase
+    use HasFactory, Notifiable, HasRoles;
 
     // Nombre de tu tabla personalizada
     protected $table = 'usuario';
@@ -39,24 +41,22 @@ class User extends Authenticatable
         ];
     }
 
-    // Dentro de tu clase User en app/Models/User.php
+    // Accessors y Mutators para compatibilidad
+    public function setNameAttribute($value)
+    {
+        $this->attributes['nombre'] = $value;
+    }
 
-// Esto va dentro de la clase User
-public function setNameAttribute($value)
-{
-    $this->attributes['nombre'] = $value;
-}
+    public function getNameAttribute()
+    {
+        return $this->nombre;
+    }
 
-public function getNameAttribute()
-{
-    return $this->nombre;
-}
-
-// app/Models/User.php O app/Models/Usuario.php
-public function turnosAsignados()
-{
-    return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
-}
+    // Relación con turnos
+    public function turnosAsignados()
+    {
+        return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
+    }
 
     // Relación con servicios
     public function servicios()

@@ -19,7 +19,7 @@ return [
         'allowed' => true,
     ],
 
-    'logo' => '<b>HOSPITAL</b> SISTEMA DE TURNOS',
+    'logo' => '<b>HOSPITAL</b> SISTEMA',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -45,11 +45,11 @@ return [
     ],
 
     'usermenu_enabled' => true,
-    'usermenu_header' => false,
+    'usermenu_header' => true,
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
     'usermenu_desc' => false,
-    'usermenu_profile_url' => false,
+    'usermenu_profile_url' => false, // Habilita el link de perfil en el botón superior derecho
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +80,7 @@ return [
     */
 
     'menu' => [
-        // Buscador superior
+        // Buscadores
         [
             'type' => 'navbar-search',
             'text' => 'search',
@@ -90,8 +90,6 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
-
-        // Buscador lateral
         [
             'type' => 'sidebar-menu-search',
             'text' => 'Buscar...',
@@ -102,39 +100,16 @@ return [
         [
             'text'    => 'Servicios',
             'icon'    => 'fas fa-fw fa-hospital',
-            'submenu' => [
-                [
-                    'text' => 'Listar Servicios',
-                    'url'  => 'servicio',
-                    'icon' => 'fas fa-fw fa-list',
-                ],
-                [
-                    'text' => 'Nuevo Servicio',
-                    'url'  => 'servicio/create',
-                    'icon' => 'fas fa-fw fa-plus-circle',
-                ],
-            ],
+            'url'     => 'servicio', // Apunta directo a la lista
+            'active'  => ['servicio*'], // Se mantiene iluminado si estás en ver/editar
         ],
 
         // --- SECCIÓN CUENTA ---
         ['header' => 'AJUSTES DE CUENTA'],
         [
             'text' => 'Mi Perfil',
-            'url'  => 'admin/settings',
+            'url'  => 'perfil',  // ¡CORREGIDO! Ya no dará 404
             'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'Cambiar Contraseña',
-            'url'  => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-
-        // --- ETIQUETAS ---
-        ['header' => 'LABELS'],
-        [
-            'text'       => 'Importante',
-            'icon_color' => 'red',
-            'url'        => '#',
         ],
     ],
 

@@ -8,17 +8,11 @@ class Persona extends Model
 {
     protected $table = 'personas';
 
-    protected $fillable = [
-        'nombres', 
-        'apellidos', 
-        'usuario_id', 
-        'tipo_trabajador', 
-        'fecha_nacimiento', 
-        'genero', 
-        'telefono', 
-        'direccion', 
-        'nacionalidad'
-    ];
+   protected $fillable = [
+    'usuario_id', 'nombres', 'apellidos', 'ci', 'telefono', 
+    'direccion', 'tipo_trabajador', 'fecha_nacimiento', 
+    'genero', 'nacionalidad'
+];
 
     public function usuario()
     {

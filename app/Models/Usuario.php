@@ -27,7 +27,11 @@ class Usuario extends Authenticatable
         'remember_token',
     ];
 
-  
+  // Dentro de la clase Usuario
+public function adminlte_profile_url()
+{
+    return 'perfil'; // El nombre de la URL que pusimos en web.php
+}
 public function servicio()
     {
         return $this->belongsTo(Servicio::class, 'servicio_id');
@@ -38,5 +42,10 @@ public function turnosAsignados()
     // Un usuario tiene muchos turnos asignados
     // 'usuario_id' es la columna en la tabla turno_asignado
     return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
+}
+public function persona()
+{
+    // Un usuario tiene una identidad en la tabla personas
+    return $this->hasOne(Persona::class, 'usuario_id', 'id');
 }
 }

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\HomeController; // <--- Importante importar el controlador aquí
 use App\Http\Controllers\TurnoAsignadoController;
-
+use App\Http\Controllers\PerfilController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -29,3 +29,7 @@ Route::resource("/servicio", ServicioController::class);
 Route::get('/turnos/crear', [TurnoAsignadoController::class, 'create'])->name('turnos.create');
 Route::post('/turnos/guardar', [TurnoAsignadoController::class, 'store'])->name('turnos.store');
 Route::get('/turnos', [TurnoAsignadoController::class, 'index'])->name('turnos.index');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
+   Route::post('/perfil/update', [PerfilController::class, 'update'])->name('perfil.update');
+});

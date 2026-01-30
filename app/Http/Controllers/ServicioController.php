@@ -12,11 +12,18 @@ use App\Models\User;
 class ServicioController extends Controller
 {
     // 1. LISTAR TODOS LOS SERVICIOS
-    public function index()
-    {
-        $servicio = DB::select("SELECT * FROM servicio");
-        return view("servicio.lista", compact("servicio"));
-    }
+    public function index(Request $request)
+{
+    // Capturamos lo que el usuario escribe en el buscador
+    $buscar = $request->get('buscar');
+
+    // Si hay algo en el buscador, filtramos; si no, traemos todos
+    $servicio = DB::select("SELECT * FROM servicio WHERE nombre LIKE ? OR descripcion LIKE ? ORDER BY id DESC", 
+        ["%$buscar%", "%$buscar%"]
+    );
+
+    return view("servicio.lista", compact("servicio", "buscar"));
+}
 
     // 2. FORMULARIO PARA CREAR SERVICIO
     public function create()
@@ -95,5 +102,41 @@ class ServicioController extends Controller
     {
         $servicio = Servicio::with('usuarios')->findOrFail($id);
         return view('servicio.show', compact('servicio'));
+    }
+    // 8. FORMULARIO PARA EDITAR
+    public function edit($id)
+    {
+        // Usamos Eloquent para buscar el servicio más fácil
+        $servicio = Servicio::findOrFail($id);
+        return view('servicio.editar', compact('servicio'));
+    }
+
+    // 9. ACTUALIZAR EN LA BASE DE DATOS
+   public function update(Request $request, $id)
+{
+    $request->validate([
+        'nombre' => 'required',
+        'cantidad_pacientes' => 'required|numeric'
+    ]);
+
+    DB::update(
+        "UPDATE servicio SET nombre = ?, descripcion = ?, cantidad_pacientes = ? WHERE id = ?",
+        [
+            $request->nombre,
+            $request->descripcion,
+            $request->cantidad_pacientes,
+            $id
+        ]
+    );
+
+    // Es mejor usar route() para evitar errores si cambias la URL en el futuro
+    return redirect()->route('servicio.index')->with('success', 'Servicio actualizado correctamente');
+}
+
+    // 10. ELIMINAR SERVICIO
+    public function destroy($id)
+    {
+        DB::delete("DELETE FROM servicio WHERE id = ?", [$id]);
+        return redirect("/servicio")->with('success', 'Servicio eliminado');
     }
 }
