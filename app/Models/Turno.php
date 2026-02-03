@@ -11,17 +11,18 @@ class Turno extends Model
     protected $table = 'turno';
 
     // Laravel asume que la PK es 'id'. Aquí la corregimos a 'id_turno'
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'id_turno';
     public $timestamps = false;
     // Si tu PK no es un número autoincremental (aunque suele serlo), 
     // podrías necesitar: public $incrementing = true;
 
     protected $fillable = [
-        'tipo',
-        'duracion',
-        'hi',
-        'hf'
-    ];
+    'nombre_turno', // En tu imagen aparece este nombre
+    'hora_inicio', 
+    'hora_fin', 
+    'duracion_horas'
+];
+  
 
     /**
      * Relación: Un turno puede estar asignado muchas veces en la tabla pivote

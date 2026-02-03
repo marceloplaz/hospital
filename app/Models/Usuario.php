@@ -32,10 +32,9 @@ public function adminlte_profile_url()
 {
     return 'perfil'; // El nombre de la URL que pusimos en web.php
 }
-public function servicio()
-    {
-        return $this->belongsTo(Servicio::class, 'servicio_id');
-    }
+public function servicio() {
+    return $this->belongsToMany(Servicio::class, 'usuario_servicio', 'usuario_id', 'servicio_id');
+}
     // Dentro de la clase Usuario
 public function turnosAsignados()
 {
@@ -48,4 +47,5 @@ public function persona()
     // Un usuario tiene una identidad en la tabla personas
     return $this->hasOne(Persona::class, 'usuario_id', 'id');
 }
+
 }

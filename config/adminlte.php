@@ -103,6 +103,14 @@ return [
             'url'     => 'servicio', // Apunta directo a la lista
             'active'  => ['servicio*'], // Se mantiene iluminado si estás en ver/editar
         ],
+        ['header' => 'GESTIÓN TURNO-USUARIO'],
+        [
+            'text' => 'Turnos',
+            'icon'    => 'fas fa-fw fa-turno',
+            'url'  => '/turnos/crear', // La vista que acabamos de crear
+            'icon' => 'fas fa-calendar-alt',
+            'label_color' => 'success',
+        ],
 
         // --- SECCIÓN CUENTA ---
         ['header' => 'AJUSTES DE CUENTA'],
@@ -110,6 +118,13 @@ return [
             'text' => 'Mi Perfil',
             'url'  => 'perfil',  // ¡CORREGIDO! Ya no dará 404
             'icon' => 'fas fa-fw fa-user',
+        ],
+        ['header' => 'ADMINISTRACIÓN'],
+        [
+          'text' => 'Gestión de Personal',
+            'url'  => 'personas',
+            'icon' => 'fas fa-users-cog',
+            'active' => ['personas*'], // Esto mantiene el botón resaltado si estás en esa sección
         ],
     ],
 

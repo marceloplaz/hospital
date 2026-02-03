@@ -11,14 +11,14 @@ class TurnoAsignado extends Model
     // Si no usas los campos created_at y updated_at en esta tabla, desactívalos:
     public $timestamps = false;
 
-    protected $fillable = [
-        'usuario_id', 
-        'semana_id', 
-        'servicio_id', 
-        'turno_id', 
-        'dia', 
-        'estado'
-    ];
+   protected $fillable = [
+    'usuario_id', 
+    'semana_id', 
+    'servicio_id', 
+    'dia', 
+    'turno_id', // <--- Debe decir exactamente turno_id
+    'estado'
+];
 
     // --- RELACIONES ---
 
@@ -37,10 +37,10 @@ class TurnoAsignado extends Model
         return $this->belongsTo(Semana::class, 'semana_id');
     }
 
-  public function turnoDetalle()
+ // En TurnoAsignado.php
+public function turnoDetalle()
 {
-    // 'turno_id' es la columna en turno_asignado
-    // 'id' es la columna en la tabla turno
-    return $this->belongsTo(Turno::class, 'turno_id', 'id');
+    // Indica explícitamente la llave foránea y la local
+    return $this->belongsTo(Turno::class, 'turno_id', 'id_turno');
 }
 }

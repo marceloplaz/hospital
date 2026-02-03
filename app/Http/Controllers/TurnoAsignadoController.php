@@ -8,137 +8,159 @@ use App\Models\Servicio;
 use App\Models\Semana;
 use App\Models\TurnoAsignado;
 use App\Models\Turno;
+use App\Models\Mes; 
+use Illuminate\Support\Facades\DB;
 
 class TurnoAsignadoController extends Controller
 {
-    // 1. Mostrar el panel de control (Matriz semanal)
-    public function index(Request $request)
+    public function create(Request $request)
     {
         $servicios = Servicio::all();
-        $semanas = Semana::with('mes')->get();
+        $turnosDisponibles = Turno::all();
+        $meses = Mes::orderBy('id', 'asc')->get(); 
+        
+        $anio = $request->get('anio', 2026);
+        $mes_id = $request->get('mes_id');
+        $semana_id = $request->get('semana_id');
+        $servicio_id = $request->get('servicio_id');
 
-        $servicioId = $request->get('servicio_id');
-        $semanaId = $request->get('semana_id');
-
-        $servicioSeleccionado = $servicioId ? Servicio::find($servicioId) : null;
-        $semanaSeleccionada = $semanaId ? Semana::with('mes')->find($semanaId) : null;
-
-        $turnos = Usuario::query()
-            ->when($servicioId, function($query) use ($servicioId) {
-                return $query->where('servicio_id', $servicioId);
-            })
-            ->with(['turnosAsignados' => function($query) use ($servicioId, $semanaId) {
-                if ($servicioId) {
-                    $query->where('servicio_id', $servicioId);
+        $semanas = $mes_id ? Semana::where('mes_id', $mes_id)->get() : collect();
+        
+        $usuarios = collect();
+        if ($servicio_id) {
+            $servicio = Servicio::find($servicio_id);
+            if ($servicio) {
+                // Obtenemos todos los usuarios del servicio
+                $usuarios = $servicio->usuarios()->where('usuario.estado', 1)->get();
+                
+                if ($semana_id && $usuarios->isNotEmpty()) {
+                    $usuarios->load(['turnosAsignados' => function($q) use ($semana_id, $servicio_id) {
+                        $q->where('semana_id', $semana_id)
+                          ->where('servicio_id', $servicio_id)
+                          ->with('turnoDetalle');
+                    }]);
                 }
-                if ($semanaId) {
-                    $query->where('semana_id', $semanaId);
-                }
-                $query->with('turnoDetalle');
-            }])
-            ->get();
-
-        return view('turnos.index', compact('turnos', 'servicios', 'semanas', 'servicioSeleccionado', 'semanaSeleccionada'));
-    }
-
-    // 2. Mostrar formulario para crear (MODIFICADO)
-public function create(Request $request)
-{
-    $servicios = Servicio::all();
-    $semanas = Semana::with('mes')->get();
-    $turnosDisponibles = Turno::all();
-
-    $selected_servicio = $request->get('servicio_id');
-    $selected_usuario = $request->get('usuario_id');
-    $selected_semana = $request->get('semana_id');
-
-    // --- CORRECCIÓN CRÍTICA AQUÍ ---
-    // Usamos 'with' para que cada usuario ya traiga sus turnos y los detalles del turno (horas)
-    // Esto es lo que permite que la tabla en Blade muestre los datos
-    $query = Usuario::where('estado', 1)
-        ->with(['turnosAsignados' => function($q) use ($selected_semana, $selected_servicio) {
-            if ($selected_semana) $q->where('semana_id', $selected_semana);
-            if ($selected_servicio) $q->where('servicio_id', $selected_servicio);
-            $q->with('turnoDetalle'); // Importante para sumar las horas
-        }]);
-
-    if ($selected_servicio) {
-        // Si tienes la relación en el modelo Servicio, la usamos
-        $servicioEncontrado = Servicio::find($selected_servicio);
-        if ($servicioEncontrado) {
-            $usuarios = $servicioEncontrado->usuarios()
-                ->where('usuario.estado', 1)
-                ->with(['turnosAsignados' => function($q) use ($selected_semana, $selected_servicio) {
-                    if ($selected_semana) $q->where('semana_id', $selected_semana);
-                    if ($selected_servicio) $q->where('servicio_id', $selected_servicio);
-                    $q->with('turnoDetalle');
-                }])
-                ->get();
-        } else {
-            $usuarios = $query->get();
+            }
         }
-    } else {
-        $usuarios = $query->get();
+
+        return view('turnos.create', compact(
+            'usuarios', 'servicios', 'semanas', 'meses', 'turnosDisponibles',
+            'servicio_id', 'semana_id', 'mes_id', 'anio'
+        ));
     }
 
-    $turnosRecientes = TurnoAsignado::with(['usuario', 'servicio', 'semana.mes', 'turnoDetalle'])
-        ->when($selected_servicio, function($query) use ($selected_servicio) {
-            return $query->where('servicio_id', $selected_servicio);
-        })
-        ->orderBy('id', 'desc')
-        ->take(10)
-        ->get();
+    // Esta es la función que llama el SELECT de la tabla
+    public function store_rapido(Request $request)
+    {
+        $request->validate([
+            'turno_asignado_id' => 'required',
+            'usuario_id' => 'nullable'
+        ]);
 
-    return view('turnos.create', compact(
-        'usuarios', 
-        'servicios', 
-        'semanas', 
-        'turnosDisponibles', 
-        'turnosRecientes', 
-        'selected_usuario', 
-        'selected_servicio', 
-        'selected_semana'
-    ));
-}
-    // 3. Guardar la asignación
- public function store(Request $request)
-{
-    $request->validate([
-        'usuario_id'  => 'required|exists:usuario,id',
-        'servicio_id' => 'required|exists:servicio,id',
-        'semana_id'   => 'required|exists:semana,id',
-        'turno_id'    => 'required|exists:turno,id',
-        'dia'         => 'required|string',
-    ]);
+        $asignacion = TurnoAsignado::find($request->turno_asignado_id);
+        
+        if (!$asignacion) {
+            return $this->redireccionLimpia($request, 'No se encontró la asignación', 'error');
+        }
 
-    $existeTurno = TurnoAsignado::where('usuario_id', $request->usuario_id)
-        ->where('semana_id', $request->semana_id)
-        ->where('dia', $request->dia)
-        ->exists();
+        if (empty($request->usuario_id)) {
+            $asignacion->delete();
+            return $this->redireccionLimpia($request, 'Turno quitado correctamente');
+        }
 
-    if ($existeTurno) {
-        // Si ya existe, volvemos atrás manteniendo los filtros en la URL
+        $asignacion->update(['usuario_id' => $request->usuario_id]);
+        return $this->redireccionLimpia($request, 'Médico reasignado con éxito');
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'usuario_id'  => 'required',
+                'semana_id'   => 'required',
+                'servicio_id' => 'required',
+                'turno_id'    => 'required', 
+                'dia'         => 'required'
+            ]);
+
+            TurnoAsignado::create([
+                'usuario_id'  => $request->usuario_id,
+                'semana_id'   => $request->semana_id,
+                'servicio_id' => $request->servicio_id,
+                'turno_id'    => $request->turno_id,
+                'dia'         => $request->dia,
+                'estado'      => 'Asignado'
+            ]);
+
+            return $this->redireccionLimpia($request, 'Turno asignado correctamente');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al guardar: ' . $e->getMessage());
+        }
+    }
+
+    public function clonarSemanaMes(Request $request)
+    {
+        $turnosBase = TurnoAsignado::where('semana_id', $request->semana_id)
+                                    ->where('servicio_id', $request->servicio_id)
+                                    ->get();
+
+        if ($turnosBase->isEmpty()) {
+            return back()->with('error', 'No hay turnos para replicar.');
+        }
+
+        $otrasSemanas = Semana::where('mes_id', $request->mes_id)
+                              ->where('id', '!=', $request->semana_id)
+                              ->get();
+
+        foreach ($otrasSemanas as $semanaDestino) {
+            foreach ($turnosBase as $turno) {
+                TurnoAsignado::updateOrCreate(
+                    [
+                        'usuario_id'  => $turno->usuario_id,
+                        'semana_id'   => $semanaDestino->id,
+                        'servicio_id' => $turno->servicio_id,
+                        'dia'         => $turno->dia,
+                    ],
+                    [
+                        'turno_id' => $turno->turno_id, 
+                        'estado'   => 'Asignado'
+                    ]
+                );
+            }
+        }
+
+        return $this->redireccionLimpia($request, '¡Semana replicada en todo el mes!');
+    }
+
+    // Función auxiliar para evitar que se pierdan los médicos en la vista
+    private function redireccionLimpia($request, $mensaje, $tipo = 'success')
+    {
         return redirect()->route('turnos.create', [
             'servicio_id' => $request->servicio_id,
-            'usuario_id'  => $request->usuario_id,
-            'semana_id'   => $request->semana_id
-        ])->with('error', 'El médico ya tiene un turno asignado para este día.');
+            'mes_id'      => $request->mes_id,
+            'semana_id'   => $request->semana_id,
+            'anio'        => $request->anio ?? 2026
+        ])->with($tipo, $mensaje);
     }
 
-    TurnoAsignado::create([
-        'usuario_id'  => $request->usuario_id,
-        'servicio_id' => $request->servicio_id,
-        'semana_id'   => $request->semana_id,
-        'turno_id'    => $request->turno_id,
-        'dia'         => $request->dia,
-        'estado'      => 'Asignado',
-    ]);
+    public function destroy(Request $request, $id)
+    {
+        if ($id == 0 && $request->has('usuario_id')) {
+            TurnoAsignado::where('usuario_id', $request->usuario_id)
+                ->where('semana_id', $request->semana_id)
+                ->where('servicio_id', $request->servicio_id)
+                ->delete();
+                
+            return $this->redireccionLimpia($request, 'Fila vaciada.');
+        }
 
-    // REDIRECCIÓN CORREGIDA: Volver a la vista de creación con los mismos datos
-    return redirect()->route('turnos.create', [
-        'servicio_id' => $request->servicio_id,
-        'usuario_id'  => $request->usuario_id,
-        'semana_id'   => $request->semana_id
-    ])->with('success', 'Turno asignado correctamente.');
-}
+        $turno = TurnoAsignado::find($id);
+        if ($turno) {
+            $turno->delete();
+            return $this->redireccionLimpia($request, 'Turno eliminado.');
+        }
+
+        return back()->with('error', 'No se pudo eliminar.');
+    }
 }
