@@ -5,9 +5,13 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center px-2">
         <h1 class="text-health text-bold"><i class="fas fa-hospital-user mr-2"></i>Gestión de Personal Médico</h1>
-        <a href="{{ route('personas.create') }}" class="btn btn-health shadow-sm">
-            <i class="fas fa-plus-circle mr-1"></i> Nuevo Registro
-        </a>
+        
+        {{-- BOTÓN NUEVO: Si es ID 1, 2 o tiene el correo de admin --}}
+        @if(auth()->user()->id == 1 || auth()->user()->id == 2 || auth()->user()->email == 'marcelo@gmail.com' || auth()->user()->roles->count() > 0)
+            <a href="{{ route('personas.create') }}" class="btn btn-health shadow-sm">
+                <i class="fas fa-plus-circle mr-1"></i> Nuevo Registro
+            </a>
+        @endif
     </div>
 @stop
 
@@ -25,7 +29,6 @@
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
             <h3 class="card-title text-muted mb-0"><i class="fas fa-list-ul mr-2 text-health"></i>Personal y Especialistas</h3>
             
-            {{-- Filtros Rápidos por Financiamiento --}}
             <div class="btn-group btn-group-toggle shadow-sm" data-toggle="buttons">
                 <label class="btn btn-outline-success btn-sm active">
                     <input type="radio" name="filterFin" value="" checked> Todos
@@ -113,27 +116,32 @@
                             </td>
 
                             <td class="text-center align-middle">
-                                <div class="btn-group border rounded bg-white shadow-xs">
-                                    @if(!$persona->usuario_id)
-                                        <button class="btn btn-sm btn-white text-health" data-toggle="modal" data-target="#modalUsuario{{ $persona->id }}" title="Habilitar Cuenta">
-                                            <i class="fas fa-shield-alt"></i>
-                                        </button>
-                                    @else
-                                        <form action="{{ route('personas.toggle', $persona->id) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-white {{ $persona->usuario->estado == 1 ? 'text-danger' : 'text-success' }}" title="Cambiar Estado">
-                                                <i class="fas fa-power-off"></i>
+                                {{-- ACCIONES: Solo para Admin (ID 1, 2 o correo específico) --}}
+                                @if(auth()->user()->id == 1 || auth()->user()->id == 2 || auth()->user()->email == 'marcelo@gmail.com')
+                                    <div class="btn-group border rounded bg-white shadow-xs">
+                                        @if(!$persona->usuario_id)
+                                            <button class="btn btn-sm btn-white text-health" data-toggle="modal" data-target="#modalUsuario{{ $persona->id }}" title="Habilitar Cuenta">
+                                                <i class="fas fa-shield-alt"></i>
                                             </button>
-                                        </form>
-                                    @endif
-                                    <a href="#" class="btn btn-sm btn-white text-info border-left" title="Editar Expediente">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                </div>
+                                        @else
+                                            <form action="{{ route('personas.toggle', $persona->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-white {{ $persona->usuario->estado == 1 ? 'text-danger' : 'text-success' }}" title="Cambiar Estado">
+                                                    <i class="fas fa-power-off"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <a href="#" class="btn btn-sm btn-white text-info border-left" title="Editar Expediente">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                @else
+                                    <span class="text-muted text-xs"><i class="fas fa-lock mr-1"></i> Solo lectura</span>
+                                @endif
                             </td>
                         </tr>
 
-                        {{-- MODAL --}}
+                        {{-- MODAL USUARIO --}}
                         <div class="modal fade" id="modalUsuario{{ $persona->id }}" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <form action="{{ route('personas.asignar') }}" method="POST" class="w-100">
@@ -184,12 +192,7 @@
 @section('css')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
     <style>
-        :root {
-            --health-color: #28a745;
-            --health-hover: #218838;
-            --health-bg: #eafaf1;
-            --health-muted: #82c91e;
-        }
+        :root { --health-color: #28a745; --health-hover: #218838; --health-bg: #eafaf1; --health-muted: #82c91e; }
         .text-health { color: var(--health-color) !important; }
         .bg-health { background-color: var(--health-color) !important; }
         .text-health-muted { color: var(--health-muted) !important; }
@@ -197,41 +200,19 @@
         .btn-health:hover { background-color: var(--health-hover); color: white; transform: translateY(-1px); transition: 0.2s; }
         .alert-health { background-color: var(--health-color); color: white; border-radius: 8px; }
         .card-health-outline { border-top: 5px solid var(--health-color); border-radius: 12px; }
-        .table thead th { 
-            background-color: #f8fbf9; 
-            color: #495057; 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #e0f2e9;
-        }
+        .table thead th { background-color: #f8fbf9; color: #495057; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #e0f2e9; }
         .table tbody tr:hover { background-color: #f1fcf5; transition: 0.3s; }
-        .avatar-health {
-            width: 42px; height: 42px; background-color: var(--health-bg);
-            color: var(--health-color); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
-        }
+        .avatar-health { width: 42px; height: 42px; background-color: var(--health-bg); color: var(--health-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
         .gender-tag { padding: 3px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: bold; }
         .male { background-color: #e3f2fd; color: #0d6efd; }
         .female { background-color: #fff0f6; color: #d63384; }
         .other { background-color: #f8f9fa; color: #6c757d; }
         .badge-health-soft { background-color: #d1f2eb; color: #117a65; border: 1px solid #a3e4d7; }
         .dot-status { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .avatar-modal {
-            width: 60px; height: 60px; background-color: var(--health-bg);
-            color: var(--health-color); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 2rem;
-        }
+        .avatar-modal { width: 60px; height: 60px; background-color: var(--health-bg); color: var(--health-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
         .bg-light-gray { background-color: #fdfdfd; }
-
-        /* Estilos para los nuevos filtros */
         .btn-outline-success { color: var(--health-color); border-color: var(--health-color); }
-        .btn-outline-success:hover, .btn-outline-success.active {
-            background-color: var(--health-color) !important;
-            border-color: var(--health-color) !important;
-            color: white !important;
-        }
-        .btn-group-toggle .btn { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .btn-outline-success:hover, .btn-outline-success.active { background-color: var(--health-color) !important; color: white !important; }
     </style>
 @stop
 
@@ -240,19 +221,24 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Inicializar DataTable
+            if ($.fn.DataTable.isDataTable('#tablaPersonal')) {
+                $('#tablaPersonal').DataTable().destroy();
+            }
+
             var table = $('#tablaPersonal').DataTable({
                 "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json" },
                 "responsive": true,
+                "autoWidth": false,
                 "order": [[0, "asc"]],
                 "pageLength": 10,
-                "columnDefs": [{ "targets": [6], "orderable": false }]
+                // Aseguramos que la columna 6 (Acciones) no sea ordenable
+                "columnDefs": [
+                    { "targets": 6, "orderable": false, "searchable": false }
+                ]
             });
 
-            // Lógica de Filtro por Fuente de Financiamiento (Columna 4)
             $('input[name="filterFin"]').on('change', function() {
-                var val = $(this).val();
-                table.column(4).search(val).draw();
+                table.column(4).search($(this).val()).draw();
             });
         });
     </script>

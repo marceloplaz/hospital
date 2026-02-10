@@ -163,4 +163,31 @@ class TurnoAsignadoController extends Controller
 
         return back()->with('error', 'No se pudo eliminar.');
     }
+    public function eliminarMes(Request $request)
+{
+    try {
+        // Validamos que tengamos los datos necesarios
+        $request->validate([
+            'mes_id' => 'required',
+            'servicio_id' => 'required'
+        ]);
+
+        // Buscamos todas las semanas que pertenecen a ese mes
+        $semanasIds = Semana::where('mes_id', $request->mes_id)->pluck('id');
+
+        // Borramos todos los turnos de ese servicio en esas semanas
+        TurnoAsignado::whereIn('semana_id', $semanasIds)
+            ->where('servicio_id', $request->servicio_id)
+            ->delete();
+
+        return redirect()->route('turnos.create', [
+            'servicio_id' => $request->servicio_id,
+            'mes_id'      => $request->mes_id,
+            'anio'        => $request->anio ?? 2026
+        ])->with('success', '¡Se han eliminado todos los turnos del mes para este servicio!');
+
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error al vaciar el mes: ' . $e->getMessage());
+    }
+}
 }

@@ -19,12 +19,12 @@ return [
         'allowed' => true,
     ],
 
-    'logo' => '<b>HOSPITAL</b> SISTEMA',
+    'logo' => '<b>SISTEMA DE CONTROL DE TURNOS</b>',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
+    'logo_img_alt' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -57,12 +57,23 @@ return [
     |--------------------------------------------------------------------------
     */
 
+   /*
+    |--------------------------------------------------------------------------
+    | Layout & Sidebar
+    |--------------------------------------------------------------------------
+    */
+
     'layout_topnav' => null,
     'layout_boxed' => null,
-    'layout_fixed_sidebar' => null,
-    'layout_fixed_navbar' => null,
+    'layout_fixed_sidebar' => true, // Te recomiendo activarlo para mejor navegación
+    'layout_fixed_navbar' => true,
     'layout_fixed_footer' => null,
-    'layout_dark_mode' => null,
+    'layout_dark_mode' => false, // Asegúrate de que esté en false para el modo claro
+
+    // Añade o modifica estas clases:
+    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_sidebar' => 'sidebar-light-success elevation-4', // 'light' lo hace blanco, 'success' mantiene tus acentos verdes
+    'classes_sidebar_nav' => 'nav-child-indent',
 
     'sidebar_mini' => 'lg',
     'sidebar_collapse' => false,
@@ -119,12 +130,15 @@ return [
             'url'  => 'perfil',  // ¡CORREGIDO! Ya no dará 404
             'icon' => 'fas fa-fw fa-user',
         ],
-        ['header' => 'ADMINISTRACIÓN'],
+        
+        // --- SECCIÓN ADMINISTRACIÓN ---
+       ['header' => 'ADMINISTRACIÓN'],
         [
-          'text' => 'Gestión de Personal',
+            'text' => 'Gestión de Personal',
             'url'  => 'personas',
             'icon' => 'fas fa-users-cog',
-            'active' => ['personas*'], // Esto mantiene el botón resaltado si estás en esa sección
+            'active' => ['personas*'],
+            // ELIMINAMOS la línea de 'can' o 'role' para que todos lo vean
         ],
     ],
 

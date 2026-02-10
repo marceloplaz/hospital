@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
-// Cambiamos Model por Authenticatable para que funcione el login
+// Usamos Authenticatable para permitir el inicio de sesión
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 
 class Usuario extends Authenticatable
 {
-    use Notifiable;
+    use HasRoles, Notifiable;
 
     protected $table = 'usuario';
 
-    // Desactiva esto si tu tabla NO tiene las columnas created_at y updated_at
+    // Desactivado porque tu tabla no tiene created_at/updated_at
     public $timestamps = false; 
 
     protected $fillable = [
@@ -27,25 +28,54 @@ class Usuario extends Authenticatable
         'remember_token',
     ];
 
-  // Dentro de la clase Usuario
-public function adminlte_profile_url()
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed', 
+        'estado' => 'integer',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración de AdminLTE
+    |--------------------------------------------------------------------------
+    */
+public function getMorphClass()
 {
-    return 'perfil'; // El nombre de la URL que pusimos en web.php
-}
-public function servicio() {
-    return $this->belongsToMany(Servicio::class, 'usuario_servicio', 'usuario_id', 'servicio_id');
-}
-    // Dentro de la clase Usuario
-public function turnosAsignados()
-{
-    // Un usuario tiene muchos turnos asignados
-    // 'usuario_id' es la columna en la tabla turno_asignado
-    return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
-}
-public function persona()
-{
-    // Un usuario tiene una identidad en la tabla personas
-    return $this->hasOne(Persona::class, 'usuario_id', 'id');
+    return 'App\Models\Usuario';
 }
 
+    public function adminlte_profile_url()
+    {
+        return 'perfil'; 
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relaciones de Base de Datos
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Relación con los Servicios asignados (Muchos a Muchos)
+     */
+    public function servicio() 
+    {
+        return $this->belongsToMany(Servicio::class, 'usuario_servicio', 'usuario_id', 'servicio_id');
+    }
+
+    /**
+     * Relación con los Turnos asignados (Uno a Muchos)
+     */
+    public function turnosAsignados()
+    {
+        return $this->hasMany(TurnoAsignado::class, 'usuario_id', 'id');
+    }
+
+    /**
+     * Relación con la tabla Personas (Uno a Uno)
+     */
+    public function persona()
+    {
+        return $this->hasOne(Persona::class, 'usuario_id', 'id');
+    }
 }

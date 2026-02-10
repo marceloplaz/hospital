@@ -31,7 +31,6 @@
                         <i class="fas fa-layer-group mr-1"></i> ACCIONES MASIVAS
                     </button>
                     <div class="dropdown-menu dropdown-menu-right">
-                        {{-- REPLICAR SEMANA --}}
                         <form action="{{ route('turnos.clonarSemanaMes') }}" method="POST" onsubmit="return confirm('¿Replicar esta semana en todo el mes?')">
                             @csrf
                             <input type="hidden" name="semana_id" value="{{ $semana_id }}">
@@ -125,19 +124,27 @@
                                         
                                         @forelse($asignaciones as $asig)
                                             <div class="turno-box mb-1 border-primary">
-                                                {{-- FORMULARIO DE CAMBIO RÁPIDO --}}
                                                 <form action="{{ route('turnos.store_rapido') }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="turno_asignado_id" value="{{ $asig->id }}">
-                                                    {{-- Datos ocultos para mantener el filtro al volver --}}
                                                     <input type="hidden" name="servicio_id" value="{{ $servicio_id }}">
                                                     <input type="hidden" name="mes_id" value="{{ $mes_id }}">
                                                     <input type="hidden" name="semana_id" value="{{ $semana_id }}">
                                                     <input type="hidden" name="anio" value="{{ $anio }}">
                                                     
-                                                    <span class="badge badge-primary d-block mb-1 p-2 text-uppercase" style="font-size: 0.65rem;">
-                                                        {{ $asig->turnoDetalle->nombre_turno ?? 'S/N' }}
-                                                    </span>
+                                                    {{-- ETIQUETA AZUL CON HORARIO --}}
+                                                    <div class="badge badge-primary d-block mb-1 p-2 shadow-sm">
+                                                        <div class="text-uppercase font-weight-bold" style="font-size: 0.65rem; line-height: 1.2;">
+                                                            {{ $asig->turnoDetalle->nombre_turno ?? 'S/N' }}
+                                                        </div>
+                                                        @if(isset($asig->turnoDetalle->hora_inicio) && isset($asig->turnoDetalle->hora_fin))
+                                                            <div class="mt-1 border-top pt-1" style="font-size: 0.6rem; opacity: 0.9; font-weight: normal;">
+                                                                <i class="far fa-clock mr-1"></i>
+                                                                {{ \Carbon\Carbon::parse($asig->turnoDetalle->hora_inicio)->format('H:i') }} - 
+                                                                {{ \Carbon\Carbon::parse($asig->turnoDetalle->hora_fin)->format('H:i') }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
 
                                                     <select name="usuario_id" class="form-control form-control-sm select-auto" onchange="this.form.submit()">
                                                         @foreach($usuarios as $med)
@@ -158,7 +165,6 @@
                                     </td>
                                 @endforeach
                                 
-                                {{-- COLUMNA DE TOTAL HORAS --}}
                                 <td class="align-middle font-weight-bold text-primary bg-light" style="font-size: 1.1rem;">
                                     @php
                                         $totalHoras = 0;
@@ -197,7 +203,6 @@
                 <input type="hidden" name="dia" id="modal_dia">
                 <input type="hidden" name="semana_id" id="modal_semana_id">
                 <input type="hidden" name="servicio_id" id="modal_servicio_id">
-                {{-- Para mantener el filtro al volver --}}
                 <input type="hidden" name="mes_id" value="{{ $mes_id }}">
                 <input type="hidden" name="anio" value="{{ $anio }}">
                 
@@ -226,7 +231,6 @@
     </div>
 </div>
 
-{{-- FORMULARIO OCULTO VACIAR FILA --}}
 <form id="formVaciarFila" action="{{ route('turnos.destroy', 0) }}" method="POST" style="display:none;">
     @csrf 
     @method('DELETE')
@@ -261,7 +265,6 @@
             semana_id: document.getElementById('semana_id').value
         };
 
-        // Si cambia servicio o mes, reseteamos la semana
         if (event && (event.target.id === 'mes_id' || event.target.id === 'servicio_id')) {
             delete params.semana_id;
         }
@@ -271,9 +274,7 @@
             else url.searchParams.delete(k);
         });
 
-        // IMPORTANTE: Limpiar cualquier usuario_id que ande en la URL para evitar que se pierdan médicos
         url.searchParams.delete('usuario_id');
-        
         window.location.href = url.pathname + '?' + url.searchParams.toString();
     }
 
