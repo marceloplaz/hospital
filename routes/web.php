@@ -46,11 +46,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/turnos/crear', [TurnoAsignadoController::class, 'create'])->name('turnos.create');
     Route::post('/turnos/guardar', [TurnoAsignadoController::class, 'store'])->name('turnos.store');
     Route::post('/turnos/store-rapido', [TurnoAsignadoController::class, 'store_rapido'])->name('turnos.store_rapido');
+    Route::post('/turnos/intercambiar', [TurnoAsignadoController::class, 'intercambiar'])->name('turnos.intercambiar');
     Route::post('/turnos/clonar-semana-mes', [TurnoAsignadoController::class, 'clonarSemanaMes'])->name('turnos.clonarSemanaMes');
     Route::post('/turnos/clonar', [TurnoAsignadoController::class, 'clonar'])->name('turnos.clonar');
     Route::post('/turnos/rotar', [TurnoAsignadoController::class, 'rotar'])->name('turnos.rotar');
     Route::post('/turnos/eliminar-mes', [TurnoAsignadoController::class, 'eliminarMes'])->name('turnos.eliminarMes');
     Route::delete('/turnos/{id}', [TurnoAsignadoController::class, 'destroy'])->name('turnos.destroy');
+    
     
     Route::resource('turnos', TurnoAsignadoController::class)->except(['index', 'show', 'create', 'store', 'destroy']);
 });

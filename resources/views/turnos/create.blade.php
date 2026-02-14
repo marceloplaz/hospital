@@ -41,7 +41,6 @@
                                 <i class="fas fa-magic mr-2"></i> Replicar semana en el mes
                             </button>
                         </form>
-
                         <div class="dropdown-divider"></div>
                         <form action="{{ route('turnos.eliminarMes') }}" method="POST" onsubmit="return confirm('¿Vaciar todo el mes?')">
                             @csrf
@@ -121,39 +120,52 @@
                                 @foreach(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as $dia)
                                     <td class="p-2 align-middle cell-container" style="min-width: 140px;">
                                         @php $asignaciones = $u->turnosAsignados->where('dia', $dia); @endphp
-                                        
                                         @forelse($asignaciones as $asig)
                                             <div class="turno-box mb-1 border-primary">
                                                 <form action="{{ route('turnos.store_rapido') }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="turno_asignado_id" value="{{ $asig->id }}">
-                                                    <input type="hidden" name="servicio_id" value="{{ $servicio_id }}">
-                                                    <input type="hidden" name="mes_id" value="{{ $mes_id }}">
-                                                    <input type="hidden" name="semana_id" value="{{ $semana_id }}">
-                                                    <input type="hidden" name="anio" value="{{ $anio }}">
                                                     
-                                                    {{-- ETIQUETA AZUL CON HORARIO --}}
                                                     <div class="badge badge-primary d-block mb-1 p-2 shadow-sm">
-                                                        <div class="text-uppercase font-weight-bold" style="font-size: 0.65rem; line-height: 1.2;">
+                                                        <div class="text-uppercase font-weight-bold" style="font-size: 0.65rem;">
                                                             {{ $asig->turnoDetalle->nombre_turno ?? 'S/N' }}
                                                         </div>
-                                                        @if(isset($asig->turnoDetalle->hora_inicio) && isset($asig->turnoDetalle->hora_fin))
-                                                            <div class="mt-1 border-top pt-1" style="font-size: 0.6rem; opacity: 0.9; font-weight: normal;">
-                                                                <i class="far fa-clock mr-1"></i>
-                                                                {{ \Carbon\Carbon::parse($asig->turnoDetalle->hora_inicio)->format('H:i') }} - 
-                                                                {{ \Carbon\Carbon::parse($asig->turnoDetalle->hora_fin)->format('H:i') }}
+                                                        @if(isset($asig->turnoDetalle->hora_inicio))
+                                                            <div style="font-size: 0.6rem; border-top: 1px solid rgba(255,255,255,0.3); margin-top: 2px; padding-top: 1px;">
+                                                                <i class="far fa-clock"></i> 
+                                                                {{ date('H:i', strtotime($asig->turnoDetalle->hora_inicio)) }} - 
+                                                                {{ date('H:i', strtotime($asig->turnoDetalle->hora_fin)) }}
                                                             </div>
                                                         @endif
                                                     </div>
 
                                                     <select name="usuario_id" class="form-control form-control-sm select-auto" onchange="this.form.submit()">
                                                         @foreach($usuarios as $med)
-                                                            <option value="{{ $med->id }}" {{ $u->id == $med->id ? 'selected' : '' }}>
-                                                                {{ $med->nombre }}
-                                                            </option>
+                                                            <option value="{{ $med->id }}" {{ $asig->usuario_id == $med->id ? 'selected' : '' }}>{{ $med->nombre }}</option>
                                                         @endforeach
                                                         <option value="">-- Quitar --</option>
                                                     </select>
+
+                                                    {{-- BOTÓN DE INTERCAMBIO ACTUALIZADO --}}
+                                                    <button type="button" class="btn btn-xs btn-secondary btn-block mt-1" 
+                                                            style="font-size: 8px; font-weight: bold;"
+                                                            onclick="abrirModalIntercambio({
+                                                                id: '{{ $asig->id }}',
+                                                                medico: '{{ $u->nombre }}',
+                                                                dia: '{{ $dia }}',
+                                                                turno: '{{ $asig->turnoDetalle->nombre_turno }}',
+                                                                horario: '{{ date('H:i', strtotime($asig->turnoDetalle->hora_inicio)) }} - {{ date('H:i', strtotime($asig->turnoDetalle->hora_fin)) }}'
+                                                            })">
+                                                        <i class="fas fa-sync-alt"></i> INTERCAMBIAR
+                                                    </button>
+
+                                                    @if($asig->observacion)
+                                                        <div class="mt-2">
+                                                            <span style="color: #ffffff; font-size: 9px; font-weight: bold; background-color: #dc3545; padding: 3px 5px; border-radius: 3px; display: block; text-transform: uppercase;">
+                                                                <i class="fas fa-exchange-alt"></i> {{ $asig->observacion }}
+                                                            </span>
+                                                        </div>
+                                                    @endif
                                                 </form>
                                             </div>
                                         @empty
@@ -164,27 +176,13 @@
                                         @endforelse
                                     </td>
                                 @endforeach
-                                
-                                <td class="align-middle font-weight-bold text-primary bg-light" style="font-size: 1.1rem;">
-                                    @php
-                                        $totalHoras = 0;
-                                        foreach($u->turnosAsignados as $asig) {
-                                            if($asig->turnoDetalle) {
-                                                $totalHoras += $asig->turnoDetalle->duracion_horas ?? 0;
-                                            }
-                                        }
-                                    @endphp
-                                    {{ $totalHoras }}h
+                                <td class="align-middle font-weight-bold text-primary bg-light">
+                                    {{ $u->turnosAsignados->sum(fn($a) => $a->turnoDetalle->duracion_horas ?? 0) }}h
                                 </td>
                             </tr>
                             @endforeach
                         @else
-                            <tr>
-                                <td colspan="9" class="py-5 text-muted text-center">
-                                    <i class="fas fa-calendar-alt fa-3x mb-3 d-block text-gray"></i>
-                                    <h5>Seleccione los filtros para visualizar la cuadrícula</h5>
-                                </td>
-                            </tr>
+                            <tr><td colspan="9" class="py-5 text-muted">Seleccione los filtros para visualizar la cuadrícula</td></tr>
                         @endif
                     </tbody>
                 </table>
@@ -193,7 +191,7 @@
     </div>
 </div>
 
-{{-- MODAL ASIGNAR --}}
+{{-- MODAL ASIGNAR NUEVO --}}
 <div class="modal fade" id="modalAsignarRapido" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-sm">
         <div class="modal-content border-success shadow-lg">
@@ -205,52 +203,76 @@
                 <input type="hidden" name="servicio_id" id="modal_servicio_id">
                 <input type="hidden" name="mes_id" value="{{ $mes_id }}">
                 <input type="hidden" name="anio" value="{{ $anio }}">
-                
-                <div class="modal-header bg-success text-white py-2">
-                    <h6 class="modal-title font-weight-bold">ASIGNAR TURNO</h6>
-                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-                </div>
+                <div class="modal-header bg-success text-white py-2"><h6 class="modal-title font-weight-bold">ASIGNAR TURNO</h6></div>
                 <div class="modal-body">
-                    <div class="form-group mb-0">
-                        <label class="small font-weight-bold">TURNO:</label>
-                        <select name="turno_id" id="turno_id_select" class="form-control" required>
-                            <option value="">-- Seleccionar --</option>
-                            @foreach($turnosDisponibles as $t)
-                                <option value="{{ $t->id_turno }}">{{ $t->nombre_turno }} ({{ $t->duracion_horas }}h)</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <select name="turno_id" class="form-control" required>
+                        <option value="">-- Seleccionar --</option>
+                        @foreach($turnosDisponibles as $t)
+                            <option value="{{ $t->id_turno }}">{{ $t->nombre_turno }} ({{ $t->duracion_horas }}h)</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="modal-footer p-2">
-                    <button type="submit" class="btn btn-success btn-sm btn-block font-weight-bold">
-                        <i class="fas fa-save mr-1"></i> GUARDAR
-                    </button>
-                </div>
+                <div class="modal-footer p-2"><button type="submit" class="btn btn-success btn-sm btn-block">GUARDAR</button></div>
             </form>
         </div>
     </div>
 </div>
 
+{{-- MODAL INTERCAMBIAR CON BUSCADOR --}}
+<div class="modal fade" id="modalIntercambio" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-danger shadow-lg">
+            <form action="{{ route('turnos.intercambiar') }}" method="POST">
+                @csrf
+                <input type="hidden" name="turno_origen_id" id="inter_asig_id">
+                
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title font-weight-bold">INTERCAMBIO LIBRE (DÍAS/MÉDICOS)</h6>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="alert alert-info py-2">
+                        <small><b>Turno seleccionado:</b> <span id="info_origen"></span></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="small font-weight-bold">BUSCAR TURNO DESTINO:</label>
+                        <select name="turno_destino_id" class="form-control select2" style="width: 100%" required>
+                            <option value="">-- Seleccione Médico y Día --</option>
+                            @foreach($todosLosTurnosSemana as $ts)
+                                <option value="{{ $ts->id }}">
+                                    {{-- Usamos el nombre del usuario y el día --}}
+                                    {{ $ts->usuario->nombre ?? 'Sin nombre' }} - {{ $ts->dia }} ({{ $ts->turnoDetalle->nombre_turno ?? 'N/A' }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">El médico seleccionado intercambiará su lugar con el original.</small>
+                    </div>
+                </div>
+                
+                <div class="modal-footer p-2">
+                    <button type="submit" class="btn btn-danger btn-block">CONFIRMAR CAMBIO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <form id="formVaciarFila" action="{{ route('turnos.destroy', 0) }}" method="POST" style="display:none;">
-    @csrf 
-    @method('DELETE')
+    @csrf @method('DELETE')
     <input type="hidden" name="usuario_id" id="vaciar_u_id">
     <input type="hidden" name="semana_id" value="{{ $semana_id }}">
     <input type="hidden" name="servicio_id" value="{{ $servicio_id }}">
-    <input type="hidden" name="mes_id" value="{{ $mes_id }}">
 </form>
-
 @stop
 
 @section('css')
 <style>
     .select-auto { font-size: 0.75rem; height: 28px; padding: 2px 4px; border-radius: 4px; }
-    .cell-container { transition: all 0.2s; position: relative; border-right: 1px solid #eee !important; }
     .cell-container:hover { background-color: #f8fff8; }
     .btn-add-cell { border-radius: 50%; width: 28px; height: 28px; padding: 0; opacity: 0.1; border: 1px dashed #28a745; }
-    .cell-container:hover .btn-add-cell { opacity: 1; transform: scale(1.1); background: white; border-style: solid; }
-    .turno-box { border: 1px solid #cbd5e0; border-radius: 6px; padding: 4px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .table thead th { vertical-align: middle; border-bottom: 0; }
+    .cell-container:hover .btn-add-cell { opacity: 1; transform: scale(1.1); }
+    .turno-box { border: 1px solid #cbd5e0; border-radius: 6px; padding: 4px; background: #fff; margin-bottom: 5px; }
+    .badge-primary { background-color: #007bff; }
 </style>
 @stop
 
@@ -264,37 +286,34 @@
             mes_id: document.getElementById('mes_id').value,
             semana_id: document.getElementById('semana_id').value
         };
-
-        if (event && (event.target.id === 'mes_id' || event.target.id === 'servicio_id')) {
-            delete params.semana_id;
-        }
-
-        Object.keys(params).forEach(k => {
-            if (params[k]) url.searchParams.set(k, params[k]);
-            else url.searchParams.delete(k);
-        });
-
-        url.searchParams.delete('usuario_id');
+        Object.keys(params).forEach(k => params[k] ? url.searchParams.set(k, params[k]) : url.searchParams.delete(k));
         window.location.href = url.pathname + '?' + url.searchParams.toString();
     }
 
     function abrirModalAsignar(uId, dia) {
-        const sem = document.getElementById('semana_id').value;
-        const ser = document.getElementById('servicio_id').value;
-        if (!sem || !ser) { alert("Seleccione Servicio y Semana"); return; }
-
         document.getElementById('modal_u_id').value = uId;
         document.getElementById('modal_dia').value = dia;
-        document.getElementById('modal_semana_id').value = sem;
-        document.getElementById('modal_servicio_id').value = ser;
+        document.getElementById('modal_semana_id').value = document.getElementById('semana_id').value;
+        document.getElementById('modal_servicio_id').value = document.getElementById('servicio_id').value;
         $('#modalAsignarRapido').modal('show');
     }
 
     function vaciarFila(uId) {
-        if(confirm('¿Vaciar los turnos de la semana para este médico?')) {
+        if(confirm('¿Vaciar los turnos de la semana?')) {
             document.getElementById('vaciar_u_id').value = uId;
             document.getElementById('formVaciarFila').submit();
         }
     }
+
+    // FUNCIÓN CORREGIDA PARA EL MODAL
+    function abrirModalIntercambio(data) {
+    document.getElementById('inter_asig_id').value = data.id;
+    document.getElementById('info_origen').innerText = data.medico + " (" + data.dia + " - " + data.turno + ")";
+    
+    // Si usas Select2 para el buscador:
+    $('.select2').val(null).trigger('change'); 
+    
+    $('#modalIntercambio').modal('show');
+}
 </script>
 @stop

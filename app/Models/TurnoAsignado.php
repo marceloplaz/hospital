@@ -17,7 +17,8 @@ class TurnoAsignado extends Model
     'servicio_id', 
     'dia', 
     'turno_id', // <--- Debe decir exactamente turno_id
-    'estado'
+    'estado',
+    'observacion'
 ];
 
     // --- RELACIONES ---
