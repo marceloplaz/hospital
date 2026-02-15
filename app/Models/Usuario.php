@@ -59,9 +59,10 @@ public function getMorphClass()
      * Relación con los Servicios asignados (Muchos a Muchos)
      */
     public function servicio() 
-    {
-        return $this->belongsToMany(Servicio::class, 'usuario_servicio', 'usuario_id', 'servicio_id');
-    }
+{
+    return $this->belongsToMany(Servicio::class, 'usuario_servicio', 'usuario_id', 'servicio_id')
+                ->withPivot('descripcion_usuario_servicio', 'estado'); // <--- AGREGA ESTO
+}
 
     /**
      * Relación con los Turnos asignados (Uno a Muchos)

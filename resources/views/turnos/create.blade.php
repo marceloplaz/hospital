@@ -17,6 +17,9 @@
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
         </div>
     @endif
+        <a href="{{ route('turnos.pdf', request()->all()) }}" class="btn btn-danger">
+        <i class="fas fa-file-pdf"></i> Exportar PDF
+        </a>
 
     <div class="card card-outline card-success shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">

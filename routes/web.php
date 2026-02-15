@@ -52,7 +52,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/turnos/rotar', [TurnoAsignadoController::class, 'rotar'])->name('turnos.rotar');
     Route::post('/turnos/eliminar-mes', [TurnoAsignadoController::class, 'eliminarMes'])->name('turnos.eliminarMes');
     Route::delete('/turnos/{id}', [TurnoAsignadoController::class, 'destroy'])->name('turnos.destroy');
-    
-    
+      
     Route::resource('turnos', TurnoAsignadoController::class)->except(['index', 'show', 'create', 'store', 'destroy']);
+   // Ruta para generar el PDF
+    Route::get('/turnos/pdf', [TurnoAsignadoController::class, 'descargarPDF'])
+      ->name('turnos.pdf')
+      ->middleware('auth');
 });

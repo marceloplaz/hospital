@@ -1,22 +1,45 @@
 <?php
 
-namespace App\Http\Controllers; // Debe estar exactamente así
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User; // Asegúrate de importar el modelo User
+use App\Models\Usuario; // En tus queries se ve que usas Usuario
+use App\Models\TurnoAsignado;
+use App\Models\Semana;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+public function index()
+{
+    $userId = auth()->id();
+    $usuario = \App\Models\Usuario::with('servicio')->find($userId);
 
-    public function index()
-    {
-        // Cargamos al usuario con sus servicios
-        $usuario = User::with('servicios')->find(auth()->id());
+    // 1. Obtenemos la semana más reciente programada para este usuario
+    $ultimaAsignacion = \App\Models\TurnoAsignado::where('usuario_id', $userId)
+                        ->orderBy('semana_id', 'desc')
+                        ->first();
+
+    $misTurnos = collect();
+    $primerServicio = $usuario->servicio->first();
+    $servicioId = $primerServicio ? $primerServicio->id : null;
+
+    if ($ultimaAsignacion) {
+        $semanaActual = \App\Models\Semana::find($ultimaAsignacion->semana_id);
         
-        return view('home', compact('usuario'));
+        // 2. Traemos TODOS los turnos de esa semana
+        // Agrupamos por día para manejar múltiples turnos el mismo día (si aplica)
+        $misTurnos = \App\Models\TurnoAsignado::where('usuario_id', $userId)
+            ->where('semana_id', $semanaActual->id)
+            ->with(['turnoDetalle', 'servicio']) // Importante cargar el servicio
+            ->get()
+            ->groupBy(function ($item) {
+                return str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'], strtolower($item->dia));
+            });
     }
+  
+    $hoyNombreEs = ucfirst(\Carbon\Carbon::now()->locale('es')->isoFormat('dddd'));
+
+    return view('home', compact('usuario', 'misTurnos', 'semanaActual', 'hoyNombreEs'));
+}
 }
